@@ -1,22 +1,68 @@
-name: 'Composite Run Steps Action Template'
+name: 'enable-f5-pool-member'
 
-description: 'Add description here'
+description: 'An action that will enable an F5 pool member in a specific pool'
 
 inputs:
-  input-1:
-    description: 'Add a description here'
+  ltm-host-name:
+    description: 'The hostname of the Local Traffic Manager (LTM)'
     required: true
-
-outputs:
-  output-1:
-    description: 'Add description here'
-    value: '${{ steps.step_1.outputs.world }}'
+  ltm-username:
+    description: 'Username of F5 LTM User'
+    required: true
+  ltm-password:
+    description: 'Password of F5 LTM User'
+    required: true
+  ltm-pool-name:
+    description: 'The pool to enable the member in'
+    required: true
+  current-host:
+    description: 'The hostname of the current machine being deployed'
+    required: true
 
 runs:
   using: 'composite'
+
   steps:
-    - name: Step 1
-      id: step_1
-      shell: bash
+    - name: Install iControlRest
+      shell: pswsh
       run: |
-        echo "::set-output name=hello::world"
+        # Make sure the F5 Module is not loaded
+        Remove-Module F5-LTM -ErrorAction SilentlyContinue
+
+        If ($null -eq (Get-InstalledModule -Name "F5-LTM" -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing F5-LTM module..."
+            Install-Module -Name "F5-LTM" -Force
+            Write-Host "Finished installing F5-LTM module..."
+        }
+        Else {
+            Write-Host "F5-LTM module is already installed..."
+        }
+
+    - name: Load F5-LTM Powershell Module
+      shell: pwsh
+      run: Import-Module F5-LTM -Force -ErrorAction Stop
+
+    - name: Create an F5 session and enable the pool member
+      shell: pwsh
+      run: |
+        # Create LTM Credentials to use to login to the F5
+        $LTMCredentials = New-Object System.Management.Automation.PSCredential "${{ inputs.ltm-username }}", "${{ inputs.ltm-password }}"
+
+        #Create a session for connecting to the LTM
+        $F5Session = New-F5Session -LTMName "${{ inputs.ltm-host-name }}" -LTMCredentials $LTMCredentials -PassThru
+
+        # Gets the hostname of the current machine being deployed.
+        $curHost = "${{ inputs.current-host }}"
+
+        # Get Pool Name and Partition from Pool
+        $Pool = "${{ inputs.ltm-pool-name }}" 
+        $Partition = ($Pool.TrimStart("/")).Split("/")[0]
+        $PoolName = ($Pool.TrimStart("/")).Split("/")[1]
+
+        # Get pool member by using hostname from specified pool
+        $Member = (Get-PoolMember -PoolName $PoolName -Partition $Partition -F5Session $F5Session | Where {$_.Name -like "*$curHost*"} ).Name
+
+        Write-Host "Member is $Member"
+        Write-host "Setting $curhost to Enabled in $Pool pool."
+
+        Enable-PoolMember -PoolName $PoolName -Partition $Partition -Name $Member -F5Session $F5Session

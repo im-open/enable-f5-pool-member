@@ -24,7 +24,7 @@ runs:
 
   steps:
     - name: Install iControlRest
-      shell: pswsh
+      shell: pwsh
       run: |
         # Make sure the F5 Module is not loaded
         Remove-Module F5-LTM -ErrorAction SilentlyContinue

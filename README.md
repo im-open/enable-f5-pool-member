@@ -34,7 +34,7 @@ jobs:
     steps:
       - run: ./deploy.sh 
       
-      - uses: im-open/enable-f5-pool-member@v1.0.2
+      - uses: im-open/enable-f5-pool-member@v1.0.3
         with:
           ltm-host-name: 'devlb.mycompany.com'
           ltm-username: 'operator-svc-dev'

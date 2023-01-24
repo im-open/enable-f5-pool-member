@@ -46,13 +46,17 @@ runs:
       shell: pwsh
       run: |
         # Create LTM Credentials to use to login to the F5
-        $LTMCredentials = New-Object System.Management.Automation.PSCredential "${{ inputs.ltm-username }}", "${{ inputs.ltm-password }}"
+        $LTMUsername = "${{ inputs.ltm-username }}"
+        $LTMPassword = '${{ inputs.ltm-password }}'
+        $LTMSecurePassword = ConvertTo-SecureString $LTMPassword -AsPlainText -Force        
+        $LTMCredentials = New-Object System.Management.Automation.PSCredential ($LTMUsername,$LTMSecurePassword)
 
         #Create a session for connecting to the LTM
         $F5Session = New-F5Session -LTMName "${{ inputs.ltm-host-name }}" -LTMCredentials $LTMCredentials -PassThru
 
         # Gets the hostname of the current machine being deployed.
         $curHost = "${{ inputs.current-host }}"
+        $curHostName = $curHost.split('.')[0]
 
         # Get Pool Name and Partition from Pool
         $Pool = "${{ inputs.ltm-pool-name }}" 
@@ -60,9 +64,9 @@ runs:
         $PoolName = ($Pool.TrimStart("/")).Split("/")[1]
 
         # Get pool member by using hostname from specified pool
-        $Member = (Get-PoolMember -PoolName $PoolName -Partition $Partition -F5Session $F5Session | Where {$_.Name -like "*$curHost*"} ).Name
+        $Member = (Get-PoolMember -PoolName $PoolName -Partition $Partition -F5Session $F5Session | Where {$_.Name -like "*$curHostName*"} ).Name
 
         Write-Host "Member is $Member"
-        Write-host "Setting $curhost to Enabled in $Pool pool."
+        Write-host "Setting $curHostName to Enabled in $Pool pool."
 
         Enable-PoolMember -PoolName $PoolName -Partition $Partition -Name $Member -F5Session $F5Session

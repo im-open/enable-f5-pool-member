@@ -8,10 +8,10 @@ An action that will enable an F5 pool member in a specific pool.
 - [Outputs](#outputs)
 - [Example](#example)
 - [Contributing](#contributing)
-  + [Incrementing the Version](#incrementing-the-version)
+  - [Incrementing the Version](#incrementing-the-version)
 - [Code of Conduct](#code-of-conduct)
 - [License](#license)
-   
+
 ## Inputs
 
 | Parameter       | Is Required | Description                                        |
@@ -23,6 +23,7 @@ An action that will enable an F5 pool member in a specific pool.
 | `current-host`  | true        | The hostname of the current machine being deployed |
 
 ## Outputs
+
 No Outputs
 
 ## Example
@@ -34,7 +35,8 @@ jobs:
     steps:
       - run: ./deploy.sh 
       
-      - uses: im-open/enable-f5-pool-member@v1.0.3
+      # You may also reference the major or major.minor version
+      - uses: im-open/enable-f5-pool-member@v1.0.4
         with:
           ltm-host-name: 'devlb.mycompany.com'
           ltm-username: 'operator-svc-dev'
@@ -42,7 +44,6 @@ jobs:
           ltm-pool-name: '/Dev/api.dev.mycompany.com.https.443'
           current-host: 'waq2-abcd'
 ```
-
 
 ## Contributing
 

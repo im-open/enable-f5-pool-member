@@ -1,3 +1,7 @@
+# DEPRECATED
+
+This action was deprecated on 2023-09-08 and will no longer receive support or updates.
+
 # enable-f5-pool-member
 
 An action that will enable an F5 pool member in a specific pool.
